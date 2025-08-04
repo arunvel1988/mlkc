@@ -2536,7 +2536,7 @@ def airflow_dashboard():
         if is_port_in_use(airflow_port):
             print(f"Port {airflow_port} is already in use, skipping port forwarding.")
         else:
-            subprocess.Popen(['kubectl', 'port-forward', 'svc/my-airflow-webserver', f'{airflow_port}:8080', '-n', 'airflow', '--address', '0.0.0.0'])
+            subprocess.Popen(['kubectl', 'port-forward', 'svc/my-airflow-api-server', f'{airflow_port}:8080', '-n', 'airflow', '--address', '0.0.0.0'])
 
         instance_ip = get_instance_ip()  # Get the instance IP
         if instance_ip == 'localhost':
