@@ -1550,13 +1550,13 @@ def ai_tools(cluster_name):
                 time.sleep(30)
                 subprocess.run(['kubectl', 'create', 'namespace', 'flink'], check=True)
                 subprocess.run([
-            'helm', 'repo', 'add', 'flink-operator-repo',
-            'https://downloads.apache.org/flink/flink-kubernetes-operator-1.12.0'
+            'helm', 'repo', 'add', 'flink-kubernetes-operator-1.12.0',
+            'https://archive.apache.org/dist/flink/flink-kubernetes-operator-1.12.0/'
         ], check=True)
                 subprocess.run(['helm', 'repo', 'update'], check=True)
                 subprocess.run([
             'helm', 'install', 'flink-kubernetes-operator',
-            'flink-operator-repo/flink-kubernetes-operator',
+            'flink-kubernetes-operator-1.12.0/flink-kubernetes-operator',
             '-n', 'flink'
         ], check=True)
                 
