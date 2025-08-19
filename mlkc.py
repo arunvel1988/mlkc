@@ -2549,7 +2549,17 @@ def airflow_dashboard():
         return jsonify({'success': False, 'error': f'Error port-forwarding Airflow web service: {str(e)}'}), 500
 
 
+########################################### FLINK ##############################################
 
+@app.route('/flink', methods=['GET'])
+def flink():
+    instance_ip = get_instance_ip()
+    if instance_ip == 'localhost':
+        dashboard_url_flink = 'http://localhost:8081'
+    else:
+        dashboard_url_flink = f'http://{instance_ip}:8081'
+    return render_template('flink.html', dashboard_url_flink=dashboard_url_flink)
+####################################################################################
 
 
 @app.route('/tekton', methods=['GET'])
