@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flink</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #009688;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .btn:hover {
+            background-color: #00796b;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #f44336;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .info {
+            margin-top: 30px;
+        }
+
+        .info p {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Apache Flink</h1>
+        <a class="btn" href="{{ url_for('flink_dashboard') }}">Flink Dashboard</a>
+        <a class="btn" href="https://nightlies.apache.org/flink/flink-docs-release-1.20/" target="_blank">Flink Docs</a>
+        
+        <div class="info">
+            <h2>About Apache Flink</h2>
+            <p>Apache Flink is a powerful open-source framework and distributed processing engine for stateful computations over unbounded and bounded data streams.</p>
+            <p>Learn more about Flink and its features on the <a href="https://flink.apache.org/" target="_blank">official Flink website</a>.</p>
+        </div>
+
+        <a class="back-button" href="/">Back</a>
+    </div>
+</body>
+</html>
