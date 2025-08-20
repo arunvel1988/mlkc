@@ -71,11 +71,70 @@ else
     echo "pip3 is already installed."
 fi
 
-# Install packages from requirements.txt
-if [[ -f "requirements.txt" ]]; then
-    echo "Installing packages from requirements.txt..."
-    pip3 install -r requirements.txt
-    echo "Packages installed successfully."
+echo "🔍 Detecting package manager..."
+if command -v apt >/dev/null 2>&1; then
+    PKG_MGR="apt"
+    PYTHON_VENV_PKG="python3-venv"
+    
+elif command -v yum >/dev/null 2>&1; then
+    PKG_MGR="yum"
+    PYTHON_VENV_PKG="python3-venv"  # Might be in python3 module
+    
+elif command -v dnf >/dev/null 2>&1; then
+    PKG_MGR="dnf"
+    PYTHON_VENV_PKG="python3-venv"
+    
 else
-    echo "requirements.txt not found. Skipping package installation."
+    echo "❌ Unsupported OS: no apt, yum, or dnf found."
+    exit 1
 fi
+
+echo "✅ Using package manager: $PKG_MGR"
+
+# Install required packages
+if [ "$PKG_MGR" = "apt" ]; then
+    echo "🔍 Checking if python3-venv is installed..."
+    if ! dpkg -s python3-venv >/dev/null 2>&1; then
+        echo "⚠️  python3-venv not found. Installing..."
+        sudo apt update -y
+        sudo apt install -y  $PYTHON_VENV_PKG
+    else
+        echo "✅ python3-venv is already installed."
+    fi
+else
+    echo "🔍 Installing Python venv and Docker..."
+    sudo $PKG_MGR install -y python3 python3-pip python3-virtualenv || \
+    sudo $PKG_MGR install -y python3 python3-pip python3-venv
+fi
+
+# Create virtual environment if missing
+VENV_DIR="venv"
+ACTIVATE="$VENV_DIR/bin/activate"
+
+if [ ! -f "$ACTIVATE" ]; then
+    echo "📦 (Re)creating virtual environment in $VENV_DIR..."
+    rm -rf "$VENV_DIR"
+    python3 -m venv "$VENV_DIR"
+    echo "✅ Virtual environment created."
+else
+    echo "✅ Virtual environment already exists."
+fi
+
+# Activate virtual environment
+echo "🐍 Activating virtual environment..."
+source "$ACTIVATE"
+
+# Install requirements
+if [ -f "requirements.txt" ]; then
+    echo "📦 Installing Python packages from requirements.txt..."
+    pip install --upgrade pip
+    pip install -r requirements.txt
+    echo "✅ Python packages installed."
+else
+    echo "❌ requirements.txt not found!"
+    exit 1
+fi
+
+# Run Python app
+echo "🚀 Running mlkc.py..."
+python3 mlkc.py
