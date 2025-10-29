@@ -62,6 +62,18 @@ def save_cluster(name, k8s_version, num_nodes):
     conn.commit()
     conn.close()
 
+########################################################################
+import yaml
+import socket
+import random
+
+def find_free_port(start=6443, end=9999):
+    """Find an unused TCP port on localhost."""
+    while True:
+        port = random.randint(start, end)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('localhost', port)) != 0:
+                return port  # free port found
 
 def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
     api_port = find_free_port()
@@ -91,7 +103,7 @@ def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
 
     print(f"[INFO] Created config for cluster '{name}' on API port {api_port}")
 
-
+##########################################
 def generate_ha_kind_config(name, num_nodes):
     # For HA cluster, one control plane node and multiple workers
     generate_kind_config(name, 1, num_nodes)
