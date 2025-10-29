@@ -63,13 +63,9 @@ def save_cluster(name, k8s_version, num_nodes):
     conn.close()
 
 ########################################################################
-import os
-import subprocess
-
-
+import yaml, socket, random
 
 def find_free_port(start=6443, end=9999):
-    """Find an unused TCP port on localhost."""
     while True:
         port = random.randint(start, end)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -78,10 +74,6 @@ def find_free_port(start=6443, end=9999):
 
 def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
     api_port = find_free_port()
-    network_name = f"{name}-net"
-
-    # Create docker network if not exists
-    subprocess.run(["docker", "network", "create", network_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     config = {
         "kind": "Cluster",
@@ -98,8 +90,8 @@ def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
         yaml.dump(config, f)
 
     print(f"[INFO] Created config for cluster '{name}' on API port {api_port}")
-    print(f"[INFO] Docker network '{network_name}' created or reused")
-    return network_name
+    return file_path
+
 
 ##########################################
 def generate_ha_kind_config(name, num_nodes):
