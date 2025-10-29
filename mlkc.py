@@ -79,13 +79,7 @@ def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
     api_port = find_free_port()
 
     control_plane_nodes = [
-        {
-            "role": "control-plane",
-            "extraMounts": [
-                {"hostPath": "/dev", "containerPath": "/dev"},
-                {"hostPath": "/var/run/docker.sock", "containerPath": "/var/run/docker.sock"}
-            ]
-        }
+        {"role": "control-plane"}  # no extraMounts
         for _ in range(num_control_plane_nodes)
     ]
 
