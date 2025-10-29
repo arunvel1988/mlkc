@@ -63,36 +63,33 @@ def save_cluster(name, k8s_version, num_nodes):
     conn.close()
 
 
-
 def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
+    api_port = find_free_port()
+
+    control_plane_nodes = [
+        {
+            "role": "control-plane",
+            "extraMounts": [
+                {"hostPath": "/dev", "containerPath": "/dev"},
+                {"hostPath": "/var/run/docker.sock", "containerPath": "/var/run/docker.sock"}
+            ]
+        }
+        for _ in range(num_control_plane_nodes)
+    ]
+
+    worker_nodes = [{"role": "worker"} for _ in range(num_worker_nodes)]
+
     config = {
         "kind": "Cluster",
         "apiVersion": "kind.x-k8s.io/v1alpha4",
-        "nodes": [
-            {
-                "role": "control-plane",
-                "extraMounts": [
-                    {
-                        "hostPath": "/dev",
-                        "containerPath": "/dev"
-                    },
-                    {
-                        "hostPath": "/var/run/docker.sock",
-                        "containerPath": "/var/run/docker.sock"
-                    }
-                ]
-            #    "extraPortMappings": [
-            #        {"containerPort": 80, "hostPort": 80, "protocol": "TCP"}
-            #        {"containerPort": 443, "hostPort": 443, "protocol": "TCP"}
-            #    ]
-            }
-        ] * num_control_plane_nodes + [
-            {"role": "worker"}
-            for _ in range(num_worker_nodes)
-        ]
+        "networking": {"apiServerPort": api_port},
+        "nodes": control_plane_nodes + worker_nodes
     }
+
     with open(f"kind-config-{name}.yaml", "w") as file:
         yaml.dump(config, file)
+
+    print(f"[INFO] Created config for cluster '{name}' on API port {api_port}")
 
 
 def generate_ha_kind_config(name, num_nodes):
