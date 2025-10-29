@@ -63,39 +63,33 @@ def save_cluster(name, k8s_version, num_nodes):
     conn.close()
 
 ########################################################################
-import yaml
-import socket
-import random
-
-def find_free_port(start=6443, end=9999):
-    """Find an unused TCP port on localhost."""
-    while True:
-        port = random.randint(start, end)
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(('localhost', port)) != 0:
-                return port  # free port found
+import os
+import subprocess
 
 def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
     api_port = find_free_port()
+    network_name = f"{name}-net"
 
-    control_plane_nodes = [
-        {"role": "control-plane"}  # no extraMounts
-        for _ in range(num_control_plane_nodes)
-    ]
-
-    worker_nodes = [{"role": "worker"} for _ in range(num_worker_nodes)]
+    # Create docker network if not exists
+    subprocess.run(["docker", "network", "create", network_name], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     config = {
         "kind": "Cluster",
         "apiVersion": "kind.x-k8s.io/v1alpha4",
         "networking": {"apiServerPort": api_port},
-        "nodes": control_plane_nodes + worker_nodes
+        "nodes": (
+            [{"role": "control-plane"} for _ in range(num_control_plane_nodes)] +
+            [{"role": "worker"} for _ in range(num_worker_nodes)]
+        )
     }
 
-    with open(f"kind-config-{name}.yaml", "w") as file:
-        yaml.dump(config, file)
+    file_path = f"kind-config-{name}.yaml"
+    with open(file_path, "w") as f:
+        yaml.dump(config, f)
 
     print(f"[INFO] Created config for cluster '{name}' on API port {api_port}")
+    print(f"[INFO] Docker network '{network_name}' created or reused")
+    return network_name
 
 ##########################################
 def generate_ha_kind_config(name, num_nodes):
