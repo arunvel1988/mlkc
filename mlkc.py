@@ -70,40 +70,31 @@ def find_free_port(start=6443, end=9999):
         port = random.randint(start, end)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             if s.connect_ex(('localhost', port)) != 0:
-                return port  # free port found
+                return port
 
 def generate_kind_config(name, num_control_plane_nodes, num_worker_nodes=1):
     api_port = find_free_port()
-
-    node_config = {
-        "extraMounts": [
-            {"hostPath": "/sys/fs/cgroup", "containerPath": "/sys/fs/cgroup"},
-        ],
-        "kubeadmConfigPatches": [
-            """
-            kind: KubeletConfiguration
-            cgroupDriver: "systemd"
-            """
-        ],
-    }
-
     config = {
         "kind": "Cluster",
         "apiVersion": "kind.x-k8s.io/v1alpha4",
-        "name": name,
         "networking": {"apiServerPort": api_port},
-        "nodes": (
-            [{"role": "control-plane", **node_config} for _ in range(num_control_plane_nodes)] +
-            [{"role": "worker", **node_config} for _ in range(num_worker_nodes)]
-        ),
+        "nodes": [
+            {
+                "role": "control-plane",
+                "extraMounts": [
+                    {"hostPath": "/dev", "containerPath": "/dev"},
+                    {"hostPath": "/var/run/docker.sock", "containerPath": "/var/run/docker.sock"},
+                ]
+            }
+        ] * num_control_plane_nodes + [
+            {"role": "worker"} for _ in range(num_worker_nodes)
+        ]
     }
-
-    file_path = f"kind-config-{name}.yaml"
-    with open(file_path, "w") as f:
+    path = f"kind-config-{name}.yaml"
+    with open(path, "w") as f:
         yaml.dump(config, f)
-
-    print(f"[INFO] Created config for cluster '{name}' on API port {api_port}")
-    return file_path
+    print(f"[INFO] Config for '{name}' created on port {api_port}")
+    return path
 
 
 
