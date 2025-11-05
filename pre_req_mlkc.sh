@@ -136,5 +136,5 @@ else
 fi
 
 # Run Python app
-echo "🚀 Running mlkc.py..."
-python3 mlkc.py
+echo "🚀 Running kubernetes-ui.py..."
+python3 kubernetes-ui.py
