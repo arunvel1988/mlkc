@@ -7,3 +7,27 @@ kubectl create namespace alloy
 helm install --namespace alloy alloy grafana/alloy
 
 kubectl get pods --namespace alloy
+
+
+##########################################################################
+
+##### config.alloy
+// Write your Alloy config here:
+logging {
+  level = "info"
+  format = "logfmt"
+}
+
+###################################################################
+
+
+kubectl create configmap --namespace alloy alloy-config "--from-file=config.alloy=./config.alloy"
+
+#################################################################
+
+
+
+
+
+
+
