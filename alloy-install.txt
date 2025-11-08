@@ -25,6 +25,24 @@ kubectl create configmap --namespace alloy alloy-config "--from-file=config.allo
 
 #################################################################
 
+#values.yaml
+
+
+alloy:
+  configMap:
+    create: false
+    name: alloy-config
+    key: config.alloy
+
+
+###############################
+
+helm upgrade --namespace alloy alloy grafana/alloy -f ./values.yaml
+
+##########################################################
+
+
+
 
 
 
