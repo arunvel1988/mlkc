@@ -1,1 +1,9 @@
+helm repo add grafana https://grafana.github.io/helm-charts
 
+helm repo update
+
+kubectl create namespace alloy
+
+helm install --namespace alloy alloy grafana/alloy
+
+kubectl get pods --namespace alloy
