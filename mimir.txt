@@ -1,0 +1,124 @@
+##########################################################
+
+
+kubectl create namespace mimir-test
+
+
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+
+
+########################################################
+
+
+helm -n mimir-test install mimir grafana/mimir-distributed
+
+kubectl -n mimir-test get pods
+
+##############################################################################
+################################### ALLOY CONFIG START ################################
+#alloy-values.yaml
+
+alloy:
+  clustering:
+    enabled: false
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+  serviceAccount:
+    create: true
+    name: ""
+  rbac:
+    create: true
+
+  configMap:
+    content: |
+      // Kubernetes service discovery for pods in test-mimir namespace
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces {
+          names = ["mimir-test"]
+        }
+      }
+      // Relabel pods to extract metrics endpoints
+      discovery.relabel "pod_relabel" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_name"]
+          regex = ""
+          action = "drop"
+        }
+        rule {
+            source_labels = ["__meta_kubernetes_pod_container_port_name"]
+            regex = ".*-metrics"
+            action = "keep"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_phase"]
+          regex = "Succeeded|Failed"
+          action = "drop"
+        }
+        // Add pod metadata as labels
+        rule {
+          source_labels = ["__meta_kubernetes_namespace", "__meta_kubernetes_pod_label_name"]
+          replacement = "$1"
+          separator = "/"
+          action = "replace"
+          target_label = "job"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          action        = "replace"
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          action        = "replace"
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          action        = "replace"
+          target_label  = "container"
+        }
+      }
+      // Scrape metrics from discovered targets
+      prometheus.scrape "kubernetes_pods" {
+        targets    = discovery.relabel.pod_relabel.output
+        forward_to = [prometheus.remote_write.test_mimir.receiver]
+        scrape_interval = "15s"
+        scrape_timeout  = "10s"
+      }
+      // Remote write to Mimir
+      prometheus.remote_write "test_mimir" {
+        endpoint {
+          url = "http://mimir-nginx.mimir-test.svc.cluster.local/api/v1/push"
+          send_native_histograms = true
+        }
+      }
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    fsGroup: 472
+
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 472
+    fsGroup: 472
+
+# Disable ServiceMonitor for monitoring Alloy itself
+serviceMonitor:
+enabled: false
+
+
+####################################################
+helm install alloy grafana/alloy --namespace alloy-test --create-namespace -f alloy-values.yaml
+
+##### ADD THIS AS DATA SOURCE 	http://mimir-nginx.mimir-test.svc:80/prometheus ##############################
+###########################################################################
+
