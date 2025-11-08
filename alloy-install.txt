@@ -42,6 +42,51 @@ helm upgrade --namespace alloy alloy grafana/alloy -f ./values.yaml
 ##########################################################
 
 
+############ALLOY CONFIG######################################################
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+# Receiver: accepts data from Flask app (OTLP)
+otelcol.receiver.otlp "flask_receiver" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    metrics = [otelcol.processor.batch.main.input]
+    logs    = [otelcol.processor.batch.main.input]
+    traces  = [otelcol.processor.batch.main.input]
+  }
+}
+
+# Processor: batch telemetry for efficiency
+otelcol.processor.batch "main" {
+  output {
+    metrics = [otelcol.exporter.otlp.mimir.input]
+    logs    = [otelcol.exporter.otlp.loki.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+# Exporters
+otelcol.exporter.otlp "mimir" {
+  client { endpoint = "http://mimir:4317" }
+}
+otelcol.exporter.otlp "loki" {
+  client { endpoint = "http://loki:4317" }
+}
+otelcol.exporter.otlp "tempo" {
+  client { endpoint = "http://tempo:4317" }
+}
+
+
+################################################## ALLOY CONFIG - END #####################################################
+
 
 
 
