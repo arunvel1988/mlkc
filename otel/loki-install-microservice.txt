@@ -87,9 +87,9 @@ minio:
 ####################################################################
 
 
-helm install --values values.yaml loki grafana/loki
+helm install --values values.yaml loki-test grafana/loki
 
-helm upgrade --values values.yaml loki grafana/loki
+helm upgrade --values values.yaml loki-test grafana/loki
 
-kubectl get pods -n loki
+kubectl get pods -n loki-test
 
