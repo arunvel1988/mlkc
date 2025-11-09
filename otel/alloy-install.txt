@@ -2,11 +2,11 @@ helm repo add grafana https://grafana.github.io/helm-charts
 
 helm repo update
 
-kubectl create namespace alloy
+kubectl create namespace alloy-test
 
-helm install --namespace alloy alloy grafana/alloy
+helm install --namespace alloy-test alloy grafana/alloy
 
-kubectl get pods --namespace alloy
+kubectl get pods --namespace alloy-test
 
 
 ##########################################################################
@@ -21,7 +21,7 @@ logging {
 ###################################################################
 
 
-kubectl create configmap --namespace alloy alloy-config "--from-file=config.alloy=./config.alloy"
+kubectl create configmap --namespace alloy-test alloy-config "--from-file=config.alloy=./config.alloy"
 
 #################################################################
 
@@ -37,7 +37,7 @@ alloy:
 
 ###############################
 
-helm upgrade --namespace alloy alloy grafana/alloy -f ./values.yaml
+helm upgrade --namespace alloy-test alloy grafana/alloy -f ./values.yaml
 
 ##########################################################
 
