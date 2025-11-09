@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-otel-demo
+  namespace: alloy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-otel-demo
+  template:
+    metadata:
+      labels:
+        app: flask-otel-demo
+    spec:
+      containers:
+        - name: flask-otel-demo
+          image: flask-otel-demo:latest  # build this image locally or push to your registry
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://alloy.alloy.svc.cluster.local:4317"
+            - name: OTEL_EXPORTER_OTLP_INSECURE
+              value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-otel-demo
+  namespace: alloy
+spec:
+  selector:
+    app: flask-otel-demo
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
