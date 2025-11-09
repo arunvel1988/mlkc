@@ -75,7 +75,7 @@ singleBinary:
  # This exposes the Loki gateway so it can be written to and queried externaly
 gateway:
    service:
-     type: LoadBalancer
+     type: ClusterIP
 
 
 # Enable minio for storage
