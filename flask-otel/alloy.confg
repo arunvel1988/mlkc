@@ -1,0 +1,106 @@
+######################################
+# 1. Receivers — Where data comes in
+######################################
+otelcol.receiver.otlp "receiver" {
+  protocols {
+    grpc {}
+    http {}
+  }
+}
+
+######################################
+# 2. Processors — Modify or filter data
+######################################
+
+# (a) Batch: Improves performance by grouping telemetry
+otelcol.processor.batch "default" {}
+
+# (b) Add attributes: Adds service name and environment
+otelcol.processor.attributes "add_common_attributes" {
+  actions = [
+    { key = "service.name", value = "flask-otel-demo", action = "insert" },
+    { key = "environment", value = "kind-lab", action = "insert" }
+  ]
+}
+
+# (c) Filter: Remove DEBUG logs
+otelcol.processor.filter "remove_debug_logs" {
+  logs {
+    include = "severity_text != 'DEBUG'"
+  }
+}
+
+# (d) Transform: Redact sensitive data in logs (passwords, tokens)
+otelcol.processor.transform "redact_sensitive_data" {
+  logs.statements = [
+    "replace_pattern(body, 'password=[^&\\s]+', 'password=REDACTED')",
+    "replace_pattern(body, 'token=[^&\\s]+', 'token=REDACTED')"
+  ]
+}
+
+# (e) Sample traces: send only 30% of traces to reduce load
+otelcol.processor.probabilisticsampler "trace_sampler" {
+  sampling_percentage = 30.0
+}
+
+######################################
+# 3. Exporters — Send data out
+######################################
+
+# Logs to Loki
+otelcol.exporter.loki "default" {
+  endpoint = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+}
+
+# Traces to Tempo
+otelcol.exporter.otlp "tempo" {
+  endpoint = "http://tempo-gateway.tempo-test.svc.cluster.local:4317"
+  tls {
+    insecure = true
+  }
+}
+
+# Metrics to Mimir
+otelcol.exporter.otlp "mimir" {
+  endpoint = "http://mimir-gateway.mimir-test.svc.cluster.local:4317"
+  tls {
+    insecure = true
+  }
+}
+
+######################################
+# 4. Pipelines — Connect receivers, processors, and exporters
+######################################
+
+# Logs pipeline
+otelcol.service.pipelines.logs "logs_pipeline" {
+  receivers  = [otelcol.receiver.otlp.receiver]
+  processors = [
+    otelcol.processor.attributes.add_common_attributes,
+    otelcol.processor.filter.remove_debug_logs,
+    otelcol.processor.transform.redact_sensitive_data,
+    otelcol.processor.batch.default
+  ]
+  exporters  = [otelcol.exporter.loki.default]
+}
+
+# Traces pipeline
+otelcol.service.pipelines.traces "traces_pipeline" {
+  receivers  = [otelcol.receiver.otlp.receiver]
+  processors = [
+    otelcol.processor.attributes.add_common_attributes,
+    otelcol.processor.probabilisticsampler.trace_sampler,
+    otelcol.processor.batch.default
+  ]
+  exporters  = [otelcol.exporter.otlp.tempo]
+}
+
+# Metrics pipeline
+otelcol.service.pipelines.metrics "metrics_pipeline" {
+  receivers  = [otelcol.receiver.otlp.receiver]
+  processors = [
+    otelcol.processor.attributes.add_common_attributes,
+    otelcol.processor.batch.default
+  ]
+  exporters  = [otelcol.exporter.otlp.mimir]
+}
