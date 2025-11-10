@@ -38,3 +38,7 @@ spec:
       port: 5000
       targetPort: 5000
   type: ClusterIP
+
+
+
+# kubectl port-forward svc/flask-otel-demo 8080:5000 -n alloy
