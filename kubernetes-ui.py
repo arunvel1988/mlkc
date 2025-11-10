@@ -323,7 +323,7 @@ def namespace_data():
 def get_grafana_secret():
     try:
         # Run the kubectl command to get the Grafana secret
-        result = subprocess.run(['kubectl', 'get', 'secret', '--namespace', 'monitoring', 'my-grafana', '-o', 'json'],
+        result = subprocess.run(['kubectl', 'get', 'secret', '--namespace', 'monitoring', 'prometheus-grafana', '-o', 'json'],
                                 capture_output=True, check=True, text=True)
         secret_json = json.loads(result.stdout)
         encoded_password = secret_json['data']['admin-password']
