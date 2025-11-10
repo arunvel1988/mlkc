@@ -28,7 +28,7 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 # ------------------------------
 # Configuration
 # ------------------------------
-ALLOY_ENDPOINT = "alloy:4317"  # OTLP endpoint of Alloy collector
+ALLOY_ENDPOINT = "http://alloy.alloy.svc.cluster.local:4317"  # OTLP endpoint of Alloy collector
 
 resource = Resource.create(attributes={
     SERVICE_NAME: "flask-demo-app",
