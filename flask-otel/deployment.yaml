@@ -41,4 +41,4 @@ spec:
 
 
 
-# kubectl port-forward svc/flask-otel-demo 8080:5000 -n alloy
+# kubectl port-forward --address 0.0.0.0 svc/flask-otel-demo 8080:5000 -n alloy
