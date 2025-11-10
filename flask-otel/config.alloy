@@ -14,7 +14,7 @@ otelcol.receiver.otlp "receiver" {
   }
 }
 
-// Processor - Add common attributes to all telemetry
+
 otelcol.processor.attributes "add_common_attributes" {
   action {
     key    = "service.name"
@@ -35,7 +35,7 @@ otelcol.processor.attributes "add_common_attributes" {
   }
 }
 
-// Processor - Filter out DEBUG level logs
+
 otelcol.processor.filter "remove_debug_logs" {
   error_mode = "ignore"
   
@@ -50,7 +50,7 @@ otelcol.processor.filter "remove_debug_logs" {
   }
 }
 
-// Processor - Probabilistic sampling for traces (30%)
+// === Processor: Sample 30% of traces ===
 otelcol.processor.probabilistic_sampler "trace_sampler" {
   sampling_percentage = 30.0
 
@@ -59,7 +59,7 @@ otelcol.processor.probabilistic_sampler "trace_sampler" {
   }
 }
 
-// Processor - Batch telemetry data for efficiency
+
 otelcol.processor.batch "default" {
   output {
     metrics = [otelcol.exporter.otlp.mimir.input]
@@ -68,31 +68,33 @@ otelcol.processor.batch "default" {
   }
 }
 
-// Exporter - Send logs to Loki
+
 otelcol.exporter.loki "default" {
   forward_to = [loki.write.default.receiver]
 }
 
 loki.write "default" {
   endpoint {
-    url = "http://loki-gateway.loki.svc.cluster.local/loki/api/v1/push"
+    url = "http://loki-gateway.loki-test.svc.cluster.local/loki/api/v1/push"
   }
 }
 
-// Exporter - Send traces to Tempo
+
 otelcol.exporter.otlp "tempo" {
   client {
-    endpoint = "http://tempo-gateway.tempo-test.svc.cluster.local:4317"
+    endpoint = "http://tempo-gateway.tempo-test.svc.cluster.local:80"
+    protocol = "http/protobuf"
     tls {
       insecure = true
     }
   }
 }
 
-// Exporter - Send metrics to Mimir
+
 otelcol.exporter.otlp "mimir" {
   client {
-    endpoint = "http://mimir-gateway.mimir-test.svc.cluster.local:4317"
+    endpoint = "http://mimir-gateway.mimir-test.svc.cluster.local:80/api/v1/push"
+    protocol = "http/protobuf"
     tls {
       insecure = true
     }
