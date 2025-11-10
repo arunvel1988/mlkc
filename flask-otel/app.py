@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 import logging
 import time
 import random
@@ -49,12 +49,60 @@ logger.setLevel(logging.INFO)
 # --- Tracer instance ---
 tracer = trace.get_tracer(__name__)
 
+# --- List of endpoints for home page ---
+ENDPOINTS = [
+    {"path": "/", "description": "Home page with all available endpoints"},
+    {"path": "/work", "description": "Simulate some work operation"},
+    {"path": "/db", "description": "Simulate a database operation"},
+    {"path": "/external", "description": "Call an external API"},
+    {"path": "/chain", "description": "Simulate a chain of operations"},
+]
+
+# --- Home page with HTML template ---
 @app.route("/")
 def home():
     with tracer.start_as_current_span("home-request"):
         logger.info("Home route accessed.")
         request_counter.add(1)
-        return "Hello from Flask + OpenTelemetry + Grafana Stack!"
+
+        html_template = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Flask + OpenTelemetry Demo</title>
+            <style>
+                body { font-family: Arial, sans-serif; background-color: #f4f6f7; color: #333; padding: 20px; }
+                h1 { color: #2c3e50; }
+                ul { list-style-type: none; padding: 0; }
+                li { margin: 10px 0; }
+                a { text-decoration: none; padding: 10px 15px; background-color: #3498db; color: white; border-radius: 5px; transition: 0.3s; }
+                a:hover { background-color: #2980b9; }
+                .endpoint-desc { font-size: 0.9em; color: #555; margin-left: 5px; }
+                .container { max-width: 800px; margin: auto; }
+                .footer { margin-top: 40px; font-size: 0.8em; color: #777; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>Welcome to Flask + OpenTelemetry Demo!</h1>
+                <p>Explore the available endpoints below:</p>
+                <ul>
+                    {% for ep in endpoints %}
+                    <li>
+                        <a href="{{ ep.path }}">{{ ep.path }}</a>
+                        <span class="endpoint-desc">{{ ep.description }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="footer">
+                    <p>Total requests metric is tracked via OpenTelemetry.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        return render_template_string(html_template, endpoints=ENDPOINTS)
+
 
 @app.route("/work")
 def do_work():
@@ -64,6 +112,7 @@ def do_work():
         logger.info("Finished /work route.")
         request_counter.add(1)
         return "Work simulated successfully!"
+
 
 @app.route("/db")
 def database_operation():
@@ -78,6 +127,7 @@ def database_operation():
         request_counter.add(1)
         return jsonify(result)
 
+
 @app.route("/external")
 def external_api_call():
     with tracer.start_as_current_span("external-api"):
@@ -88,12 +138,12 @@ def external_api_call():
         request_counter.add(1)
         return jsonify({"external_status": response.status_code})
 
+
 @app.route("/chain")
 def chain_operations():
     with tracer.start_as_current_span("chained-request") as parent_span:
         logger.info("Starting chained operation.")
 
-        # Simulate sequential internal calls
         with tracer.start_as_current_span("fetch-user", parent=parent_span):
             time.sleep(random.uniform(0.2, 0.5))
             logger.info("Fetched user data.")
@@ -109,6 +159,7 @@ def chain_operations():
         request_counter.add(1)
         logger.info("Chained operation finished.")
         return "Chained operations completed!"
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
