@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: flask-otel-demo
-          image: flask-otel-demo:latest  # build this image locally or push to your registry
+          image: arunvel1988/flask-otel-demo:latest  
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
