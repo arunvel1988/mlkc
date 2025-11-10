@@ -23,6 +23,13 @@ logging {
 
 kubectl create configmap --namespace alloy-test alloy-config "--from-file=config.alloy=./config.alloy"
 
+
+kubectl create configmap alloy-config \
+  --namespace alloy \
+  --from-file=config.alloy=./config.alloy \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+
 #################################################################
 
 #values.yaml
