@@ -4,30 +4,44 @@ import time
 import random
 import requests
 
-# OpenTelemetry imports
+# --- OpenTelemetry imports ---
 from opentelemetry import trace, metrics
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.sdk.resources import Resource
+
+# Traces
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+
+# Metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 
-# Initialize Flask
+# Logs
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry._logs import set_logger_provider
+
+# --- Flask initialization ---
 app = Flask(__name__)
 
-# Define OpenTelemetry resource (service identity)
+# --- Resource definition ---
 resource = Resource(attributes={"service.name": "flask-demo-app"})
+
+# ========================
+# 🚀 OpenTelemetry Setup
+# ========================
 
 # --- Tracing setup ---
 trace_provider = TracerProvider(resource=resource)
 trace.set_tracer_provider(trace_provider)
-otlp_exporter = OTLPSpanExporter(endpoint="http://alloy.alloy.svc.cluster.local:4317", insecure=True)
-trace_provider.add_span_processor(BatchSpanProcessor(otlp_exporter))
+otlp_trace_exporter = OTLPSpanExporter(endpoint="http://alloy.alloy.svc.cluster.local:4317", insecure=True)
+trace_provider.add_span_processor(BatchSpanProcessor(otlp_trace_exporter))
 
 # --- Metrics setup ---
 metric_reader = PeriodicExportingMetricReader(
@@ -38,11 +52,22 @@ metrics.set_meter_provider(metrics_provider)
 meter = metrics.get_meter("flask-demo-meter")
 request_counter = meter.create_counter("http_requests_total", description="Number of HTTP requests")
 
+# --- Logs setup ---
+log_exporter = OTLPLogExporter(endpoint="http://alloy.alloy.svc.cluster.local:4317", insecure=True)
+logger_provider = LoggerProvider(resource=resource)
+logger_provider.add_log_record_processor(BatchLogRecordProcessor(log_exporter))
+set_logger_provider(logger_provider)
+
+# Attach OTel handler to Python logging
+otel_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
+logging.getLogger().addHandler(otel_handler)
+
 # --- Instrumentation setup ---
 LoggingInstrumentor().instrument(set_logging_format=True)
 FlaskInstrumentor().instrument_app(app)
 RequestsInstrumentor().instrument()
 
+# --- Python logger ---
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -58,7 +83,10 @@ ENDPOINTS = [
     {"path": "/chain", "description": "Simulate a chain of operations"},
 ]
 
-# --- Home page with HTML template ---
+# ========================
+# 🌐 Flask Routes
+# ========================
+
 @app.route("/")
 def home():
     with tracer.start_as_current_span("home-request"):
@@ -95,7 +123,7 @@ def home():
                     {% endfor %}
                 </ul>
                 <div class="footer">
-                    <p>Total requests metric is tracked via OpenTelemetry.</p>
+                    <p>Traces, metrics, and logs are exported to OpenTelemetry via OTLP.</p>
                 </div>
             </div>
         </body>
@@ -161,5 +189,8 @@ def chain_operations():
         return "Chained operations completed!"
 
 
+# ========================
+# 🏁 App Entry Point
+# ========================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
