@@ -76,7 +76,7 @@ loki.write "default" {
 
 otelcol.exporter.otlp "tempo" {
   client {
-    endpoint = "tempo-gateway.tempo-test.svc.cluster.local:4317"
+    endpoint = "tempo-distributor.tempo-test.svc.cluster.local:4317"
     tls {
       insecure = true
     }
