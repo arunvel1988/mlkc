@@ -1,108 +1,91 @@
+alloy:
+  configMap:
+    create: true
+    content: |
+      otelcol.receiver.otlp "receiver" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+        output {
+          metrics = [otelcol.processor.attributes.add_common_attributes.input]
+          logs    = [otelcol.processor.attributes.add_common_attributes.input]
+          traces  = [otelcol.processor.attributes.add_common_attributes.input]
+        }
+      }
 
-otelcol.receiver.otlp "receiver" {
-  grpc {
-    endpoint = "0.0.0.0:4317"
-  }
-  
-  http {
-    endpoint = "0.0.0.0:4318"
-  }
+      otelcol.processor.attributes "add_common_attributes" {
+        action {
+          key    = "service.name"
+          value  = "flask-otel-demo"
+          action = "insert"
+        }
+        action {
+          key    = "environment"
+          value  = "kind-lab"
+          action = "insert"
+        }
+        output {
+          metrics = [otelcol.processor.batch.default.input]
+          logs    = [otelcol.processor.filter.remove_debug_logs.input]
+          traces  = [otelcol.processor.probabilistic_sampler.trace_sampler.input]
+        }
+      }
 
-  output {
-    metrics = [otelcol.processor.attributes.add_common_attributes.input]
-    logs    = [otelcol.processor.attributes.add_common_attributes.input]
-    traces  = [otelcol.processor.attributes.add_common_attributes.input]
-  }
-}
+      otelcol.processor.filter "remove_debug_logs" {
+        error_mode = "ignore"
+        logs {
+          log_record = [
+            "severity_text != \"DEBUG\"",
+          ]
+        }
+        output {
+          logs = [otelcol.processor.batch.default.input]
+        }
+      }
 
+      otelcol.processor.probabilistic_sampler "trace_sampler" {
+        sampling_percentage = 30.0
+        output {
+          traces = [otelcol.processor.batch.default.input]
+        }
+      }
 
-otelcol.processor.attributes "add_common_attributes" {
-  action {
-    key    = "service.name"
-    value  = "flask-otel-demo"
-    action = "insert"
-  }
-  
-  action {
-    key    = "environment"
-    value  = "kind-lab"
-    action = "insert"
-  }
+      otelcol.processor.batch "default" {
+        output {
+          metrics = [otelcol.exporter.prometheus.mimir.input]
+          logs    = [otelcol.exporter.loki.default.input]
+          traces  = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
 
-  output {
-    metrics = [otelcol.processor.batch.default.input]
-    logs    = [otelcol.processor.filter.remove_debug_logs.input]
-    traces  = [otelcol.processor.probabilistic_sampler.trace_sampler.input]
-  }
-}
+      otelcol.exporter.loki "default" {
+        forward_to = [loki.write.default.receiver]
+      }
 
+      loki.write "default" {
+        endpoint {
+          url = "http://loki-gateway.loki-test.svc.cluster.local/loki/api/v1/push"
+        }
+      }
 
-otelcol.processor.filter "remove_debug_logs" {
-  error_mode = "ignore"
-  
-  logs {
-    log_record = [
-      "severity_text != \"DEBUG\"",
-    ]
-  }
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "tempo-distributor.tempo-test.svc.cluster.local:4317"
+          tls {
+            insecure = true
+          }
+        }
+      }
 
-  output {
-    logs = [otelcol.processor.batch.default.input]
-  }
-}
+      otelcol.exporter.prometheus "mimir" {
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
 
-
-otelcol.processor.probabilistic_sampler "trace_sampler" {
-  sampling_percentage = 30.0
-
-  output {
-    traces = [otelcol.processor.batch.default.input]
-  }
-}
-
-
-otelcol.processor.batch "default" {
-  output {
-    metrics = [otelcol.exporter.prometheus.mimir.input]
-    logs    = [otelcol.exporter.loki.default.input]
-    traces  = [otelcol.exporter.otlp.tempo.input]
-  }
-}
-
-
-otelcol.exporter.loki "default" {
-  forward_to = [loki.write.default.receiver]
-}
-
-loki.write "default" {
-  endpoint {
-    url = "http://loki-gateway.loki-test.svc.cluster.local/loki/api/v1/push"
-  }
-}
-
-
-otelcol.exporter.otlp "tempo" {
-  client {
-    endpoint = "tempo-distributor.tempo-test.svc.cluster.local:4317"
-    tls {
-      insecure = true
-    }
-  }
-}
-
-
-otelcol.exporter.prometheus "mimir" {
-  forward_to = [prometheus.remote_write.mimir.receiver]
-}
-
-
-prometheus.remote_write "mimir" {
-  endpoint {
-    url = "http://mimir-distributor.mimir-test.svc.cluster.local:8080/api/v1/push"
-    
-    // Optional: Add headers if needed for authentication
-    // headers = {
-    //   "X-Scope-OrgID" = "tenant1",
-    // }
-  }
-}
+      prometheus.remote_write "mimir" {
+        endpoint {
+          url = "http://mimir-distributor.mimir-test.svc.cluster.local:8080/api/v1/push"
+        }
+      }
