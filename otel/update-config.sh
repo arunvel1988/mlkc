@@ -36,21 +36,13 @@ function update_configmap() {
 }
 
 function restart_alloy() {
-    echo "Restarting Alloy pods..."
+    echo "Restarting Alloy DaemonSet..."
     
-    # Check if it's a deployment or daemonset
-    if kubectl get deployment -n $NAMESPACE -l app.kubernetes.io/name=alloy &>/dev/null; then
-        kubectl rollout restart deployment -n $NAMESPACE -l app.kubernetes.io/name=alloy
-        echo "Waiting for rollout to complete..."
-        kubectl rollout status deployment -n $NAMESPACE -l app.kubernetes.io/name=alloy --timeout=120s
-    elif kubectl get daemonset -n $NAMESPACE -l app.kubernetes.io/name=alloy &>/dev/null; then
-        kubectl rollout restart daemonset -n $NAMESPACE -l app.kubernetes.io/name=alloy
-        echo "Waiting for rollout to complete..."
-        kubectl rollout status daemonset -n $NAMESPACE -l app.kubernetes.io/name=alloy --timeout=120s
-    else
-        echo "No deployment or daemonset found for Alloy. Trying to delete pods..."
-        kubectl delete pods -n $NAMESPACE -l app.kubernetes.io/name=alloy
-    fi
+    # Restart the daemonset
+    kubectl rollout restart daemonset -n $NAMESPACE -l app.kubernetes.io/name=alloy
+    
+    echo "Waiting for rollout to complete..."
+    kubectl rollout status daemonset -n $NAMESPACE -l app.kubernetes.io/name=alloy --timeout=120s
     
     echo "Restart complete."
     echo ""
