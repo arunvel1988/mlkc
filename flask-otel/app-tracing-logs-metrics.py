@@ -15,9 +15,11 @@ from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
 
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler, set_logger_provider
+# Logs
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
+import opentelemetry._logs as logs
 
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
@@ -26,7 +28,7 @@ from opentelemetry.instrumentation.logging import LoggingInstrumentor
 # ------------------------------
 # Configuration
 # ------------------------------
-ALLOY_ENDPOINT = "http://alloy:4317"
+ALLOY_ENDPOINT = "alloy:4317"  # OTLP endpoint of Alloy collector
 
 resource = Resource.create(attributes={
     SERVICE_NAME: "flask-demo-app",
@@ -58,10 +60,10 @@ request_counter = meter.create_counter("http_requests_total", description="Numbe
 # Logging
 # ------------------------------
 logger_provider = LoggerProvider(resource=resource)
-logger_provider.add_log_record_processor(BatchLogRecordProcessor(
-    OTLPLogExporter(endpoint=ALLOY_ENDPOINT, insecure=True)
-))
-set_logger_provider(logger_provider)
+logger_provider.add_log_record_processor(
+    BatchLogRecordProcessor(OTLPLogExporter(endpoint=ALLOY_ENDPOINT, insecure=True))
+)
+logs.set_logger_provider(logger_provider)  # ✅ updated import usage
 
 otel_handler = LoggingHandler(level=logging.INFO, logger_provider=logger_provider)
 logging.getLogger().addHandler(otel_handler)
@@ -140,9 +142,6 @@ def chain_trace():
         request_counter.add(1)
         return {"status": "ok", "message": "Chain trace generated"}
 
-# ------------------------------
-# Delayed chain for latency demonstration
-# ------------------------------
 @app.route("/delayed-chain")
 def delayed_chain():
     with tracer.start_as_current_span("delayed-chain-root") as span:
