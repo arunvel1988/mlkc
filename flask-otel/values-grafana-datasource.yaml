@@ -1,0 +1,45 @@
+grafana:
+  additionalDataSources:
+    # --- Loki (Logs) ---
+    - name: Loki
+      type: loki
+      access: proxy
+      uid: loki
+      url: http://loki-test-gateway.default:80
+      jsonData:
+        maxLines: 1000
+      editable: true
+
+    # --- Tempo (Traces) ---
+    - name: Tempo
+      type: tempo
+      access: proxy
+      uid: tempo
+      url: http://tempo-query-frontend.tempo-test:3200
+      jsonData:
+        tracesToLogs:
+          datasourceUid: loki
+          filterByTraceID: true
+          mapTagNamesEnabled: true
+        tracesToMetrics:
+          datasourceUid: mimir
+          tags: ["job"]
+          queries:
+            - name: "Request Rate"
+              query: "rate(http_requests_total[5m])"
+        serviceMap:
+          datasourceUid: tempo
+      editable: true
+
+    # --- Mimir (Metrics) ---
+    - name: Mimir
+      type: prometheus
+      access: proxy
+      uid: mimir
+      url: http://mimir-gateway.mimir-test:80
+      jsonData:
+        timeInterval: "10s"
+        prometheusType: "Mimir"
+        exemplarTraceIdDestinations:
+          - datasourceUid: tempo
+      editable: true
