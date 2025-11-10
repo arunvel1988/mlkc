@@ -2,7 +2,7 @@ otelcol.receiver.otlp "receiver" {
   grpc {
     endpoint = "0.0.0.0:4317"
   }
-  
+
   http {
     endpoint = "0.0.0.0:4318"
   }
@@ -14,14 +14,13 @@ otelcol.receiver.otlp "receiver" {
   }
 }
 
-
 otelcol.processor.attributes "add_common_attributes" {
   action {
     key    = "service.name"
     value  = "flask-otel-demo"
     action = "insert"
   }
-  
+
   action {
     key    = "environment"
     value  = "kind-lab"
@@ -35,10 +34,9 @@ otelcol.processor.attributes "add_common_attributes" {
   }
 }
 
-
 otelcol.processor.filter "remove_debug_logs" {
   error_mode = "ignore"
-  
+
   logs {
     log_record = [
       "severity_text != \"DEBUG\"",
@@ -50,7 +48,6 @@ otelcol.processor.filter "remove_debug_logs" {
   }
 }
 
-// === Processor: Sample 30% of traces ===
 otelcol.processor.probabilistic_sampler "trace_sampler" {
   sampling_percentage = 30.0
 
@@ -59,7 +56,6 @@ otelcol.processor.probabilistic_sampler "trace_sampler" {
   }
 }
 
-
 otelcol.processor.batch "default" {
   output {
     metrics = [otelcol.exporter.otlp.mimir.input]
@@ -67,7 +63,6 @@ otelcol.processor.batch "default" {
     traces  = [otelcol.exporter.otlp.tempo.input]
   }
 }
-
 
 otelcol.exporter.loki "default" {
   forward_to = [loki.write.default.receiver]
@@ -79,22 +74,18 @@ loki.write "default" {
   }
 }
 
-
 otelcol.exporter.otlp "tempo" {
   client {
-    endpoint = "http://tempo-gateway.tempo-test.svc.cluster.local:80"
-    protocol = "http/protobuf"
+    endpoint = "tempo-gateway.tempo-test.svc.cluster.local:4317"
     tls {
       insecure = true
     }
   }
 }
 
-
 otelcol.exporter.otlp "mimir" {
   client {
-    endpoint = "http://mimir-gateway.mimir-test.svc.cluster.local:80/api/v1/push"
-    protocol = "http/protobuf"
+    endpoint = "mimir-gateway.mimir-test.svc.cluster.local:4317"
     tls {
       insecure = true
     }
