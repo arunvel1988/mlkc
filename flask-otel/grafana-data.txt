@@ -16,3 +16,7 @@ kubectl patch svc alloy -n alloy --type='merge' -p '{
 
 
 ##############################################
+
+## flask app ##############
+
+# kubectl port-forward --address 0.0.0.0 svc/flask-otel-demo 8081:5000 -n alloy
