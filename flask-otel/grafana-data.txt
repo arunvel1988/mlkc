@@ -1,0 +1,4 @@
+kubectl cp datasources.yaml monitoring/prometheus-grafana-759947db9f-j4ns8:/etc/grafana/provisioning/datasources/datasources.yaml
+
+
+kubectl delete pod prometheus-grafana-759947db9f-j4ns8 -n monitoring
