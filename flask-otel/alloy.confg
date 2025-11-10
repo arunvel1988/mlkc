@@ -26,7 +26,7 @@ otelcol.processor.attributes "add_common_attributes" {
 # (c) Filter: Remove DEBUG logs
 otelcol.processor.filter "remove_debug_logs" {
   logs {
-    include = "severity_text != 'DEBUG'"
+    match = "severity_text != 'DEBUG'"
   }
 }
 
@@ -103,4 +103,15 @@ otelcol.service.pipelines.metrics "metrics_pipeline" {
     otelcol.processor.batch.default
   ]
   exporters  = [otelcol.exporter.otlp.mimir]
+}
+
+######################################
+# 5. Service definition — enables all pipelines
+######################################
+otelcol.service "telemetry_service" {
+  pipelines = [
+    otelcol.service.pipelines.logs.logs_pipeline,
+    otelcol.service.pipelines.traces.traces_pipeline,
+    otelcol.service.pipelines.metrics.metrics_pipeline
+  ]
 }
