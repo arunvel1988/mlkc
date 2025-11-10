@@ -1,0 +1,48 @@
+
+otelcol.receiver.otlp "default" {
+  http {}
+  grpc {}
+
+  output {
+    traces  = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+    metrics = [otelcol.processor.batch.default.input]
+  }
+}
+
+
+otelcol.processor.batch "default" {
+  output {
+    traces  = [otelcol.exporter.otlp.tempo.input]
+    logs    = [otelcol.exporter.otlphttp.logs.input]
+    metrics = [otelcol.exporter.otlphttp.metrics.input]
+  }
+}
+
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo-distributor.tempo-test.svc.cluster.local:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+
+otelcol.exporter.otlphttp "logs" {
+  client {
+    endpoint = "http://loki-gateway.loki-test.svc.cluster.local/loki/api/v1/push"
+  }
+}
+
+
+otelcol.exporter.otlphttp "metrics" {
+  client {
+    endpoint = "http://mimir-distributor.mimir-test.svc.cluster.local:8080/api/v1/push"
+  }
+}
+
+livedebugging {
+  enabled = true
+}
