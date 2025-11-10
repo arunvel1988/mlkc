@@ -1,8 +1,9 @@
+
 otelcol.receiver.otlp "receiver" {
   grpc {
     endpoint = "0.0.0.0:4317"
   }
-
+  
   http {
     endpoint = "0.0.0.0:4318"
   }
@@ -14,13 +15,14 @@ otelcol.receiver.otlp "receiver" {
   }
 }
 
+
 otelcol.processor.attributes "add_common_attributes" {
   action {
     key    = "service.name"
     value  = "flask-otel-demo"
     action = "insert"
   }
-
+  
   action {
     key    = "environment"
     value  = "kind-lab"
@@ -34,9 +36,10 @@ otelcol.processor.attributes "add_common_attributes" {
   }
 }
 
+
 otelcol.processor.filter "remove_debug_logs" {
   error_mode = "ignore"
-
+  
   logs {
     log_record = [
       "severity_text != \"DEBUG\"",
@@ -48,6 +51,7 @@ otelcol.processor.filter "remove_debug_logs" {
   }
 }
 
+
 otelcol.processor.probabilistic_sampler "trace_sampler" {
   sampling_percentage = 30.0
 
@@ -56,13 +60,15 @@ otelcol.processor.probabilistic_sampler "trace_sampler" {
   }
 }
 
+
 otelcol.processor.batch "default" {
   output {
-    metrics = [otelcol.exporter.prometheus_remote_write.mimir.input]
+    metrics = [otelcol.exporter.prometheus.mimir.input]
     logs    = [otelcol.exporter.loki.default.input]
     traces  = [otelcol.exporter.otlp.tempo.input]
   }
 }
+
 
 otelcol.exporter.loki "default" {
   forward_to = [loki.write.default.receiver]
@@ -74,6 +80,7 @@ loki.write "default" {
   }
 }
 
+
 otelcol.exporter.otlp "tempo" {
   client {
     endpoint = "tempo-distributor.tempo-test.svc.cluster.local:4317"
@@ -83,8 +90,19 @@ otelcol.exporter.otlp "tempo" {
   }
 }
 
-otelcol.exporter.prometheus_remote_write "mimir" {
-  endpoint = "http://mimir-distributor.mimir-test.svc.cluster.local:8080/api/v1/push"
-  headers = {}
-  timeout = "10s"
+
+otelcol.exporter.prometheus "mimir" {
+  forward_to = [prometheus.remote_write.mimir.receiver]
+}
+
+
+prometheus.remote_write "mimir" {
+  endpoint {
+    url = "http://mimir-distributor.mimir-test.svc.cluster.local:8080/api/v1/push"
+    
+    // Optional: Add headers if needed for authentication
+    // headers = {
+    //   "X-Scope-OrgID" = "tenant1",
+    // }
+  }
 }
