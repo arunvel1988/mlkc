@@ -2,3 +2,17 @@ kubectl cp datasources.yaml monitoring/prometheus-grafana-759947db9f-j4ns8:/etc/
 
 
 kubectl delete pod prometheus-grafana-759947db9f-j4ns8 -n monitoring
+###############################################################
+
+kubectl patch svc alloy -n alloy --type='merge' -p '{
+  "spec": {
+    "ports": [
+      {"name": "otlp-grpc", "port": 4317, "targetPort": 4317},
+      {"name": "otlp-http", "port": 4318, "targetPort": 4318},
+      {"name": "admin", "port": 12345, "targetPort": 12345}
+    ]
+  }
+}'
+
+
+##############################################
