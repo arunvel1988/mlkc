@@ -20,3 +20,10 @@ kubectl patch svc alloy -n alloy --type='merge' -p '{
 ## flask app ##############
 
 # kubectl port-forward --address 0.0.0.0 svc/flask-otel-demo 8081:5000 -n alloy
+
+########################################################
+
+
+kubectl exec -it flask-otel-demo-846b647c76-xzj48 -n alloy -- python3 -c "import socket; s=socket.socket(); s.settimeout(3); s.connect(('alloy.alloy.svc.cluster.local', 4317)); print('Connection OK')"
+
+######################################################################
