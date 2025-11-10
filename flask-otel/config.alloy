@@ -85,7 +85,7 @@ otelcol.exporter.otlp "tempo" {
 
 otelcol.exporter.otlp "mimir" {
   client {
-    endpoint = "mimir-gateway.mimir-test.svc.cluster.local:4317"
+    endpoint = "mimir-distributor.mimir-test.svc.cluster.local:8080"
     tls {
       insecure = true
     }
