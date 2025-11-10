@@ -1,25 +1,19 @@
 #!/bin/bash
-# Expose Loki, Tempo, and Mimir publicly via 0.0.0.0
-# Use this only in a controlled lab environment (not production)
-
 set -e
 
 echo "Starting port forwarding on 0.0.0.0 for Loki, Tempo, and Mimir..."
 
-# Kill any previous port-forwards
-pkill -f "kubectl port-forward" || true
+# Loki (namespace: default)
+kubectl port-forward svc/loki-test-gateway -n default 3100:80 --address=0.0.0.0 &
+LOKI_PID=$!
 
-# Loki
-kubectl port-forward svc/loki-gateway -n loki 3100:80 --address 0.0.0.0 &
-sleep 2
+# Tempo (namespace: tempo-test)
+kubectl port-forward svc/tempo-query-frontend -n tempo-test 3200:3200 --address=0.0.0.0 &
+TEMPO_PID=$!
 
-# Tempo
-kubectl port-forward svc/tempo-gateway -n tempo-test 3200:80 --address 0.0.0.0 &
-sleep 2
-
-# Mimir
-kubectl port-forward svc/mimir-gateway -n mimir-test 9090:80 --address 0.0.0.0 &
-sleep 2
+# Mimir (namespace: mimir-test)
+kubectl port-forward svc/mimir-gateway -n mimir-test 9090:80 --address=0.0.0.0 &
+MIMIR_PID=$!
 
 echo "----------------------------------------------------------------"
 echo "Grafana Data Source Endpoints:"
@@ -30,4 +24,5 @@ echo "----------------------------------------------------------------"
 echo "Access from outside EC2 via: http://<your-ec2-public-ip>:<port>"
 echo "----------------------------------------------------------------"
 
+trap "kill $LOKI_PID $TEMPO_PID $MIMIR_PID" EXIT
 wait
