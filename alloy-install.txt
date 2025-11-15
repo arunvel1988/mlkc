@@ -44,12 +44,18 @@ helm upgrade --namespace alloy alloy grafana/alloy -f ./values.yaml
 
 ############ALLOY CONFIG######################################################
 
+alloy:
+  configMap:
+    create: false
+    name: alloy-config
+    key: config.alloy
+arunvelarunachalam@demo:~/tempo$ cat config.alloy 
 logging {
   level  = "info"
   format = "logfmt"
 }
 
-# Receiver: accepts data from Flask app (OTLP)
+
 otelcol.receiver.otlp "flask_receiver" {
   grpc {
     endpoint = "0.0.0.0:4317"
@@ -64,7 +70,7 @@ otelcol.receiver.otlp "flask_receiver" {
   }
 }
 
-# Processor: batch telemetry for efficiency
+
 otelcol.processor.batch "main" {
   output {
     metrics = [otelcol.exporter.otlp.mimir.input]
@@ -73,7 +79,7 @@ otelcol.processor.batch "main" {
   }
 }
 
-# Exporters
+
 otelcol.exporter.otlp "mimir" {
   client { endpoint = "http://mimir:4317" }
 }
