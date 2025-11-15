@@ -43,13 +43,6 @@ helm upgrade --namespace alloy alloy grafana/alloy -f ./values.yaml
 
 
 ############ALLOY CONFIG######################################################
-
-alloy:
-  configMap:
-    create: false
-    name: alloy-config
-    key: config.alloy
-arunvelarunachalam@demo:~/tempo$ cat config.alloy 
 logging {
   level  = "info"
   format = "logfmt"
