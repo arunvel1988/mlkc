@@ -23,6 +23,8 @@ logging {
 
 kubectl create configmap --namespace alloy alloy-config "--from-file=config.alloy=./config.alloy"
 
+kubectl delete cm alloy-config -n alloy
+
 #################################################################
 
 #values.yaml
