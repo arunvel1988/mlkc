@@ -95,8 +95,12 @@ otelcol.exporter.otlp "tempo" {
 
 
 
+########## HELM ENDPOINT ####################
+otelcol.exporter.loki "loki" {
+  endpoint = "http://loki-gateway:3100/loki/api/v1/push"
+}
 
-
+########## HELM ENDPOINT -END ####################
 
 
 
