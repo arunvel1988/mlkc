@@ -356,7 +356,28 @@ def get_jenkins_password():
         return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
 
 
+#############################################################################################
 
+@app.route('/get_nexus_password', methods=['GET'])
+def get_nexus_password():
+    try:
+        # Get the nexus secret using jsonpath
+        result = subprocess.run(
+            ['kubectl', 'get', 'secret', '-n', 'jenkins', 'jenkins', '-o', 'jsonpath={.data.jenkins-admin-password}'],
+            capture_output=True, check=True, text=True
+        )
+        encoded_password = result.stdout.strip()
+        decoded_password = base64.b64decode(encoded_password).decode('utf-8')
+
+        return jsonify({'success': True, 'password': decoded_password})
+
+    except subprocess.CalledProcessError as e:
+        return jsonify({'success': False, 'error': f'Error retrieving Jenkins password: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Unexpected error: {str(e)}'}), 500
+
+
+####################################################################################################
 
 @app.route('/upload_yaml/<cluster_name>', methods=['GET', 'POST'])
 def upload_yaml(cluster_name):
@@ -383,7 +404,7 @@ def upload_yaml(cluster_name):
     return render_template('upload_yaml.html', cluster_name=cluster_name)
 
 
-
+#
 
 
 def get_namespaces():
