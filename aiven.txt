@@ -1,0 +1,11 @@
+################## KUBERNETES SECRET #########################################
+
+
+kubectl create secret generic aiven-kafka-tls \
+  --namespace logging \
+  --from-file=ca.pem \
+  --from-file=service.cert \
+  --from-file=service.key
+
+
+##############################################################################
