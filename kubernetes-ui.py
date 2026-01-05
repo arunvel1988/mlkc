@@ -2379,7 +2379,7 @@ def deploy_kafka_app():
         create_namespace_if_not_exists('kafka-app')
 
         # Deploy Kafka application
-        subprocess.run(['kubectl', 'apply', '-f', 'https://raw.githubusercontent.com/arunvel1988/kafka_demo_ecom_website/refs/heads/main/manifests/app.yaml', '-n', 'kafka-app'], check=True)
+        subprocess.run(['kubectl', 'apply', '-f', 'https://raw.githubusercontent.com/arunvel1988/kafka_demo_ecom_website/refs/heads/aiven-kafka/manifests/app.yaml', '-n', 'kafka-app'], check=True)
 
         # Wait for Kafka pods to come up
         time.sleep(15)  # Adjust this delay as needed
