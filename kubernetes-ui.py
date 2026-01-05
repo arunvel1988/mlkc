@@ -2404,7 +2404,7 @@ def deploy_kafka_app():
 def delete_kafka_app():
     try:
         # Delete the kafka-app namespace
-        subprocess.run(['kubectl', 'delete', '-f', 'https://raw.githubusercontent.com/arunvel1988/kafka_demo_ecom_website/refs/heads/main/manifests/app.yaml', '-n', 'kafka-app'], check=True)
+        subprocess.run(['kubectl', 'delete', '-f', 'https://raw.githubusercontent.com/arunvel1988/kafka_demo_ecom_website/refs/heads/aiven-kafka/manifests/app.yaml', '-n', 'kafka-app'], check=True)
         return jsonify({'success': True, 'message': 'Kafka Ecomm Application namespace deleted successfully.'})
     except subprocess.CalledProcessError as e:
         return jsonify({'success': False, 'error': str(e)})
