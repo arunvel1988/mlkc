@@ -2,7 +2,7 @@
 
 
 kubectl create secret generic aiven-kafka-tls \
-  --namespace logging \
+  --namespace kafka-app \
   --from-file=ca.pem \
   --from-file=service.cert \
   --from-file=service.key
